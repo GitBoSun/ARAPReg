@@ -45,7 +45,11 @@ parser.add_argument('--test_decay_step', type=int, default=1)
 
 parser.add_argument('--arap_weight', type=float, default=0.05)
 parser.add_argument('--use_arap_epoch', type=int, default=600, help='epoch that we start to use arap loss')
+<<<<<<< HEAD
 parser.add_argument('--arap_eig_k', type=int, default=0, help='only care about last k eigvals of the hessian matrix in ARAP')
+=======
+parser.add_argument('--arap_eig_k', type=int, default=60, help='only care about last k eigvals of the hessian matrix in ARAP')
+>>>>>>> bdcf4b47280561a04a91f571f8ea9f86e0730dfa
 
 # training hyperparameters
 parser.add_argument('--batch_size', type=int, default=16)

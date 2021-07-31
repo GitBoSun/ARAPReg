@@ -76,9 +76,6 @@ class MeshData(object):
                                                    3).mean(dim=0)
         self.std = self.train_dataset.data.x.view(self.num_train_graph, -1,
                                                   3).std(dim=0)
-        #self.mean = torch.zeros(self.mean.shape)
-        #self.std = torch.ones(self.std.shape)
-        # print(self.mean, self.std) 
         self.normalize()
 
     def normalize(self):

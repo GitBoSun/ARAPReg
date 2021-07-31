@@ -85,7 +85,9 @@ def train(model, epoch, optimizer, loader,lat_vecs, device, results_dir,data_mea
             arap_energy = arap(pred_shape, jacob, k=arap_eig_k) / jacob.shape[-1]
             total_arap_loss += arap_energy.item()
             loss += arap_weight*arap_energy
+
         loss.backward()
+            
         total_loss += loss.item()
         total_l1_loss += l1_loss.item()
         optimizer.step()
