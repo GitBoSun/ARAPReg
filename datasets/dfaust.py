@@ -5,12 +5,8 @@ from glob import glob
 import torch
 from torch_geometric.data import InMemoryDataset, extract_zip, Data
 from torch_geometric.utils import to_undirected
-from utils.read import read_mesh
 
-from tqdm import tqdm
 import numpy as np
-import openmesh as om
-import scipy.io as sio
 
 class DFaust(InMemoryDataset):
 
@@ -74,7 +70,7 @@ class DFaust(InMemoryDataset):
             if i%100==0:
                 print('processing training data %d/%d'%(i, train_points.shape[0]))
 
-            data = convert_to_data(faces, train, data_id, pose=poses[data_id])
+            data = convert_to_data(faces, train, data_id)
             if self.pre_transform is not None:
                 data = self.pre_transform(data)
             train_data_list.append(data)
@@ -97,13 +93,12 @@ class DFaust(InMemoryDataset):
             print('processing testing data %d/%d'%(i, test_points.shape[0]))
             test = test_points[i]
 
-            data = convert_to_data(faces, test, data_id, pose=test_poses[i])
+            data = convert_to_data(faces, test, data_id)
             if self.pre_transform is not None:
                 data = self.pre_transform(data)
             test_data_list.append(data)
             data_id += 1 
-
-        torch.save(self.collate(test_data_list), self.processed_paths[2])
+        torch.save(self.collate(test_data_list), self.processed_paths[1])
 
 
 if __name__ == '__main__':

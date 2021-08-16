@@ -12,10 +12,9 @@ class Writer:
         if self.args is not None:
             tmp_log_list = glob(os.path.join(args.out_dir, 'log*'))
             
-            if args.mode=='test':
-                self.test_log_file = os.path.join(
-                    args.out_dir, 'test_log_{:s}.txt'.format(
-                        time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime())))
+            self.test_log_file = os.path.join(
+                args.out_dir, 'test_log_{:s}.txt'.format(
+                    time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime())))
             if len(tmp_log_list) == 0:
                 self.log_file = os.path.join(
                     args.out_dir, 'log_{:s}.txt'.format(
@@ -38,7 +37,7 @@ class Writer:
         
         with open(self.log_file, 'a') as log_file:
             log_file.write('{:s}\n'.format(message))
-        print(message)
+        #print(message)
 
     def print_info_test(self, info):
         message = '[test] Epoch: {}/{}, Time: {:.3f}s, Train Loss: {:.5f}, L1: {:.5f}, arap: {:.5f} MSE: {:.6f} lr: {:.6f}' \
@@ -47,9 +46,10 @@ class Writer:
 
         with open(self.test_log_file, 'a') as log_file:
             log_file.write('{:s}\n'.format(message))
-        print(message)
+        #print(message)
 
-    def save_checkpoint(self, model, latent_vecs, optimizer, scheduler, epoch, test=False):
+    def save_checkpoint(self, model, latent_vecs, optimizer, scheduler,
+                        epoch, test=False):
         model_path = self.args.checkpoints_dir
         if test==True:
             model_path = self.args.checkpoints_dir_test
@@ -63,25 +63,32 @@ class Writer:
                 'scheduler_state_dict': scheduler.state_dict(),
                 'train_latent_vecs': latent_vecs.state_dict(),
             },
-            os.path.join(model_path,
-                         'checkpoint_{:04d}.pt'.format(epoch)))
+            os.path.join(
+                model_path, 'checkpoint_{:04d}.pt'.format(epoch))
+        )
 
-    def load_checkpoint(self, model, latent_vecs=None, optimizer=None, scheduler=None, test=False):
+    def load_checkpoint(self, model, latent_vecs=None, optimizer=None,
+                        scheduler=None, test=False, checkpoint=None):
         model_path = self.args.checkpoints_dir
         if test==True:
             model_path = self.args.checkpoints_dir_test
 
-        checkpoint_list = glob(os.path.join(model_path, 'checkpoint_*'))
-        if len(checkpoint_list)==0:
-            print('train from scrach')
-            return 0
-        latest_checkpoint = sorted(checkpoint_list)[-1]
+        if checkpoint is None:
+            checkpoint_list = glob(os.path.join(model_path, 'checkpoint_*'))
+            if len(checkpoint_list)==0:
+                print('train from scrach')
+                return 0
+            latest_checkpoint = sorted(checkpoint_list)[-1]
+        else:
+            latest_checkpoint = checkpoint
         print("loading model from ", latest_checkpoint)
         data = torch.load(latest_checkpoint)
         model.load_state_dict(data["model_state_dict"])
         if latent_vecs:
-            optimizer.load_state_dict(data["optimizer_state_dict"])
-            scheduler.load_state_dict(data["scheduler_state_dict"])
             latent_vecs.load_state_dict(data["train_latent_vecs"])
+        if scheduler:
+            scheduler.load_state_dict(data["scheduler_state_dict"])
+        if optimizer:
+            optimizer.load_state_dict(data["optimizer_state_dict"])
         print("loaded!")
         return data["epoch"]

@@ -4,7 +4,8 @@ from sklearn.decomposition import PCA
 import numpy as np
 import sys 
 sys.path.append("./")
-import torch 
+import torch
+import os
 
 class MeshData(object):
     def __init__(self,
@@ -94,12 +95,9 @@ class MeshData(object):
         if self.use_vert_pca:
             print("Computing vertex PCA...")
             self.pca.fit(np.reshape(vertices_train, (self.num_train_graph, -1)))
-            #train_pca_sv = self.pca.singular_values_
             pca_axes = self.pca.components_
             train_pca_sv= np.matmul(np.reshape(vertices_train, (self.num_train_graph, -1)), pca_axes.transpose())
             test_pca_sv = np.matmul(np.reshape(vertices_test, (self.num_test_graph, -1)), pca_axes.transpose())
-            print('train pca', train_pca_sv.mean(),np.std(train_pca_sv, axis=0), train_pca_sv.max(), train_pca_sv.min())
-            # print('test pca', test_pca_sv.mean(),np.std(test_pca_sv, axis=0), test_pca_sv.max(), test_pca_sv.min())
             pca_sv_mean = np.mean(train_pca_sv, axis=0)
             pca_sv_std = np.std(train_pca_sv, axis=0)
             self.train_pca_sv = (train_pca_sv - pca_sv_mean)/pca_sv_std

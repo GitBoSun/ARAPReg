@@ -22,12 +22,21 @@ parser.add_argument('--cpu', action='store_true', help='if True, use CPU only')
 parser.add_argument('--mode', type=str, default='train', help='[train, test, interpolate, extraplate]')
 parser.add_argument('--work_dir', type=str, default='./out')
 parser.add_argument('--data_dir', type=str, default='./data')
+parser.add_argument('--checkpoint', type=str, default=None)
+parser.add_argument('--distributed', action='store_true')
+parser.add_argument('--alsotest', action='store_true')
 
 # network hyperparameters
 parser.add_argument('--out_channels',
                     nargs='+',
                     #default=[32, 32, 32, 64],
                     default=[16, 16, 16, 32],
+                    type=int)
+
+parser.add_argument('--ds_factors',
+                    nargs='+',
+                    #default=[32, 32, 32, 64],
+                    default=[4, 4, 4, 4],
                     type=int)
 
 parser.add_argument('--latent_channels', type=int, default=8)
@@ -45,11 +54,7 @@ parser.add_argument('--test_decay_step', type=int, default=1)
 
 parser.add_argument('--arap_weight', type=float, default=0.05)
 parser.add_argument('--use_arap_epoch', type=int, default=600, help='epoch that we start to use arap loss')
-<<<<<<< HEAD
-parser.add_argument('--arap_eig_k', type=int, default=0, help='only care about last k eigvals of the hessian matrix in ARAP')
-=======
 parser.add_argument('--arap_eig_k', type=int, default=60, help='only care about last k eigvals of the hessian matrix in ARAP')
->>>>>>> bdcf4b47280561a04a91f571f8ea9f86e0730dfa
 
 # training hyperparameters
 parser.add_argument('--batch_size', type=int, default=16)
@@ -121,15 +126,14 @@ meshdata = MeshData(args.data_fp,
 train_loader = DataLoader(meshdata.train_dataset,
                           batch_size=args.batch_size,
                           shuffle=True)
-test_loader = DataLoader(meshdata.test_dataset, batch_size=args.batch_size, shuffle=True)
+test_loader = DataLoader(meshdata.test_dataset, batch_size=args.batch_size, shuffle=False)
 
 # generate/load transform matrices
 transform_fp = osp.join(args.data_fp, 'transform.pkl')
 if not osp.exists(transform_fp):
     print('Generating transform matrices...')
     mesh = Mesh(filename=template_fp)
-    ds_factors = [4, 4, 4, 4]
-    #ds_factors = [2, 2, 2, 2]
+    ds_factors = args.ds_factors
     if args.dataset=='SMAL':
         ds_factors = [1, 1, 1, 1]
     _, A, D, U, F = mesh_sampling.generate_transform_matrices(mesh, ds_factors)
@@ -161,12 +165,34 @@ model = AE(args.in_channels,
            up_transform_list,
            K=args.K)
 
-model.to(device)
+if args.distributed:
+    #from mmcv.parallel import MMDistributedDataParallel
+    #from mmcv.runner import get_dist_info, init_dist
+    #init_dist('pytorch')
+
+    #model = MMDistributedDataParallel(
+    #    model.cuda(),
+    #    device_ids=[torch.cuda.current_device()],
+    #    broadcast_buffers=False,
+    #    find_unused_parameters=False
+    #)
+    model = torch.nn.DataParallel(model)
+    model = model.to(device)
+else:
+    model = model.to(device)
 #print(model)
+
+test_num_scenes = len(meshdata.test_dataset)
+test_lat_vecs = torch.nn.Embedding(test_num_scenes, args.latent_channels,)
+torch.nn.init.normal_(test_lat_vecs.weight.data, 0.0, 0.2)
+test_lat_vecs = test_lat_vecs.to(device)
 
 if args.use_vert_pca:
     pca_init = torch.from_numpy(meshdata.train_pca_sv)
     lat_vecs = torch.nn.Embedding.from_pretrained(pca_init, freeze=False)
+    test_pca_init = torch.from_numpy(meshdata.test_pca_sv)
+    test_lat_vecs = torch.nn.Embedding.from_pretrained(test_pca_init, freeze=False)
+    test_lat_vecs = test_lat_vecs.to(device)
 elif args.use_pose_init:
     pose_init = torch.from_numpy(np.array(meshdata.train_dataset.data.pose, np.float32))
     pose_init = pose_init.reshape(meshdata.num_train_graph, -1)
@@ -177,13 +203,9 @@ else:
     torch.nn.init.normal_(lat_vecs.weight.data,0.0,0.2)
 
 lat_vecs = lat_vecs.to(device)
-print("train lat_vecs", lat_vecs)
-
-test_num_scenes = len(meshdata.test_dataset)
-test_lat_vecs = torch.nn.Embedding(test_num_scenes, args.latent_channels,)
-torch.nn.init.normal_(test_lat_vecs.weight.data, 0.0, 0.2) 
-test_lat_vecs = test_lat_vecs.to(device)
-print("test lat_vecs", test_lat_vecs)
+if args.continue_train:
+    start_epoch = writer.load_checkpoint(model, lat_vecs, None,
+                                         None, checkpoint=args.checkpoint)
 
 optimizer_all = torch.optim.Adam(
     [
@@ -204,10 +226,25 @@ scheduler = torch.optim.lr_scheduler.StepLR(optimizer_all,
                                             args.decay_step,
                                             gamma=args.lr_decay)
 if args.mode=='train':
-    train_eval.run(model, train_loader, test_loader, lat_vecs, args.epochs, optimizer_all,\
-                   scheduler, writer, device, results_dir_train, meshdata.mean.numpy(), meshdata.std.numpy(),meshdata.template_face,\
-                   arap_weight=args.arap_weight, use_arap_epoch=args.use_arap_epoch, arap_eig_k=args.arap_eig_k, \
-                           continue_train=args.continue_train,)
+    if args.alsotest:
+        optimizer_test = torch.optim.Adam(test_lat_vecs.parameters(),
+                                     lr=args.test_lr,
+                                     weight_decay=args.weight_decay)
+        scheduler_test = torch.optim.lr_scheduler.StepLR(optimizer_test,
+                                                args.test_decay_step,
+                                                gamma=args.lr_decay)
+    else:
+        optimizer_test = None
+        scheduler_test = None
+
+    train_eval.run(model, 
+        train_loader, lat_vecs, optimizer_all, scheduler,
+        test_loader, test_lat_vecs, optimizer_test, scheduler_test,
+        args.epochs, writer, device, results_dir_train, 
+        meshdata.mean.numpy(), meshdata.std.numpy(), meshdata.template_face,
+        arap_weight=args.arap_weight, use_arap_epoch=args.use_arap_epoch, 
+        arap_eig_k=args.arap_eig_k, continue_train=args.continue_train, 
+        checkpoint=args.checkpoint)
 
 elif args.mode=='test':
     optimizer_test = torch.optim.Adam(test_lat_vecs.parameters(),
@@ -217,7 +254,9 @@ elif args.mode=='test':
                                             args.test_decay_step,
                                             gamma=args.lr_decay)
     train_eval.test_reconstruct(model, test_loader, test_lat_vecs, args.test_epochs, optimizer_test, scheduler_test, writer,
-        device, results_dir_test, meshdata.mean.numpy(), meshdata.std.numpy(), meshdata.template_face)
+        device, results_dir_test, meshdata.mean.numpy(), meshdata.std.numpy(), meshdata.template_face, checkpoint=args.checkpoint)
+    #train_eval.test_reconstruct(model, train_loader, lat_vecs, args.test_epochs, optimizer_test, scheduler_test, writer,
+    #    device, results_dir_test, meshdata.mean.numpy(), meshdata.std.numpy(), meshdata.template_face, checkpoint=args.checkpoint)
 
 elif args.mode=='interpolate':
     train_eval.global_interpolate(model, lat_vecs, optimizer_all, scheduler, 

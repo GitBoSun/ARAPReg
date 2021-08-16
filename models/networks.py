@@ -59,11 +59,25 @@ class AE(nn.Module):
         super(AE, self).__init__()
         self.in_channels = in_channels
         self.out_channels = out_channels
-        self.edge_index = edge_index
-        self.down_transform = down_transform
-        self.up_transform = up_transform
+        #self.edge_index = edge_index
+        self.num_edge_index = len(edge_index)
+        for i in range(self.num_edge_index):
+            self.register_buffer(f'edge_index_{i}', edge_index[i])
+            setattr(self, f'edge_index_{i}', edge_index[i])
+
+        #self.down_transform = down_transform
+        self.num_down_transform = len(down_transform)
+        for i in range(self.num_down_transform):
+            self.register_buffer(f'down_transform_{i}', down_transform[i])
+            setattr(self, f'down_transform_{i}', down_transform[i])
+        
+        #self.up_transform = up_transform
+        self.num_up_transform = len(up_transform)
+        for i in range(self.num_up_transform):
+            self.register_buffer(f'up_transform_{i}', up_transform[i])
+            setattr(self, f'up_transform_{i}', up_transform[i])
         # self.num_vert used in the last and the first layer of encoder and decoder
-        self.num_vert = self.down_transform[-1].size(0)
+        self.num_vert = down_transform[-1].size(0)
 
         # encoder
         #self.en_layers = nn.ModuleList()
@@ -107,7 +121,8 @@ class AE(nn.Module):
     def encoder(self, x):
         for i, layer in enumerate(self.en_layers):
             if i != len(self.en_layers) - 1:
-                x = layer(x, self.edge_index[i], self.down_transform[i])
+                x = layer(x, getattr(self, f'edge_index_{i}'),
+                          getattr(self, f'down_transform_{i}'))
             else:
                 x = x.view(-1, layer.weight.size(1))
                 x = layer(x)
@@ -121,11 +136,11 @@ class AE(nn.Module):
                 x = layer(x)
                 x = x.view(-1, self.num_vert, self.out_channels[-1])
             elif i != num_layers - 1:
-                x = layer(x, self.edge_index[num_deblocks - i],
-                          self.up_transform[num_deblocks - i])
+                x = layer(x, getattr(self, f'edge_index_{num_deblocks - i}'),
+                          getattr(self, f'up_transform_{num_deblocks - i}'))
             else:
                 # last layer
-                x = layer(x, self.edge_index[0])
+                x = layer(x, getattr(self, 'edge_index_0'))
         return x
 
     def forward(self, x):
