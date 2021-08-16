@@ -48,6 +48,8 @@ You can find pre-trained models and training logs in the following paths:
 ### Run testing 
 After putting pre-trained checkpoints to their corresponding paths, you can run the following scripts to optimize latent vectors for shape reconstruction. Note that our model has the auto-decoder architecture, so there's still a latent vector training stage for testing shapes. 
 
+Note that both SMAL and Bone checkpoints were trained on a single GPU. Please keep `args.distributed` `False` in `main.py`. In your own training, you can use multiple GPUs. 
+
 **DFAUST**:
 ```
 bash test_dfaust.sh
