@@ -16,7 +16,7 @@ Note that Pytorch and Pytorch Geometric versions might change with your cuda ver
 
 
 ## Data Preparation
-We provide data paths and loaders for 3 datasets: [DFAUST](https://dfaust.is.tue.mpg.de/), [SMAL](https://smal.is.tue.mpg.de/) and Bone dataset. 
+We provide data for 3 datasets: [DFAUST](https://dfaust.is.tue.mpg.de/), [SMAL](https://smal.is.tue.mpg.de/) and Bone dataset. 
 
 ### DFAUST
 We use 4264 test shapes and 32933 training shapes from DFaust dataset.
@@ -83,7 +83,7 @@ bash train_bone.sh
 
 ## Train on a new dataset
 Data preprocessing and loading scripts are in `./datasets`.
-To train on a new dataset, please write data loading file similar to `./datasets/dfaust.py`. Then add the dataset to `./datasets/meshdata.py` and `main.py`. Finally you can write a similar training script like `train_dfaust.sh`. 
+To train on a new dataset, please write data loading file similar to `./datasets/dfaust.py`. Then add the dataset to `./datasets/meshdata.py` and `main.py`. Finally you can write a similar training script like `train_and_test_dfaust.sh`. 
 
 
 
