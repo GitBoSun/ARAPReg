@@ -5,7 +5,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 python -W ignore main.py \
 --exp_name 'arap' \
 --device_idx 0 \
 --batch_size 64 \
---epochs 400 \
+--epochs 450 \
 --lr 1e-4 \
 --test_lr 1e-3 \
 --test_decay_step 5 \
