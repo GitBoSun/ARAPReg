@@ -250,17 +250,25 @@ def get_jacobian_rand(cur_shape, z, data_mean_gpu, data_std_gpu, model, device, 
 
 
 def test_reconstruct(
-    model, test_loader, test_lat_vecs, epochs, test_optimizer, scheduler, writer,
-    device, results_dir, data_mean, data_std, template_face, checkpoint):
+    model, test_loader, test_lat_vecs, epochs, test_optimizer, scheduler,
+    writer, device, results_dir, data_mean, data_std, template_face,
+    checkpoint=None, test_checkpoint=None):
     # load model
     start_epoch = writer.load_checkpoint(model, checkpoint=checkpoint)
+    if test_checkpoint is not None:
+        start_epoch = writer.load_checkpoint(
+            model, test_lat_vecs, test_optimizer, scheduler,
+            checkpoint=test_checkpoint, test=True)
 
     for epoch in range(1, epochs + 1):
         t = time.time()
 
-        test_loss, l1_loss, arap_loss, l2_error = train(model, epoch, test_optimizer, test_loader, 
-                test_lat_vecs, device, results_dir,data_mean, data_std, template_face, 
-                arap_weight=0.0, use_arap=False, dump=True,)
+        test_loss, l1_loss, arap_loss, l2_error = \
+            train(model, epoch, test_optimizer, test_loader, 
+                test_lat_vecs, device, results_dir, data_mean,
+                data_std, template_face, arap_weight=0.0, use_arap=False,
+                dump=True, exp_name='reconstruct', lr=scheduler.get_lr()[0],
+            )
         
         t_duration = time.time() - t
         scheduler.step()
@@ -275,12 +283,17 @@ def test_reconstruct(
             'lr': scheduler.get_lr()[0]
         }
         if epoch % 200 == 1:
-            writer.save_checkpoint(model, test_lat_vecs, test_optimizer, scheduler, epoch, test=True)
+            writer.save_checkpoint(model, test_lat_vecs, test_optimizer,
+                scheduler, epoch, test=True)
         writer.print_info_test(info)
-    writer.save_checkpoint(model, test_lat_vecs, test_optimizer, scheduler, epoch, test=True)
+    writer.save_checkpoint(
+        model, test_lat_vecs, test_optimizer,
+        scheduler, epoch, test=True)
 
-def global_interpolate(model, lat_vecs, optimizer, scheduler, writer, device, results_dir, data_mean,
-        data_std, template_face, interpolate_num):
+def global_interpolate(
+        model, lat_vecs, optimizer, scheduler, writer,
+        device, results_dir, data_mean, data_std,
+        template_face, interpolate_num):
     from scipy.sparse import csr_matrix
     from scipy.sparse.csgraph import minimum_spanning_tree
     import numpy as np

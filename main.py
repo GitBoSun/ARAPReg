@@ -228,12 +228,11 @@ scheduler = torch.optim.lr_scheduler.StepLR(optimizer_all,
                                             gamma=args.lr_decay)
 if args.mode=='train':
     if args.alsotest:
-        optimizer_test = torch.optim.Adam(test_lat_vecs.parameters(),
-                                     lr=args.test_lr,
-                                     weight_decay=args.weight_decay)
-        scheduler_test = torch.optim.lr_scheduler.StepLR(optimizer_test,
-                                                args.test_decay_step,
-                                                gamma=args.lr_decay)
+        optimizer_test = torch.optim.Adam(
+            test_lat_vecs.parameters(), lr=args.test_lr, 
+            weight_decay=args.weight_decay)
+        scheduler_test = torch.optim.lr_scheduler.StepLR(
+            optimizer_test, args.test_decay_step, gamma=args.lr_decay)
     else:
         optimizer_test = None
         scheduler_test = None
@@ -245,7 +244,7 @@ if args.mode=='train':
         meshdata.mean.numpy(), meshdata.std.numpy(), meshdata.template_face,
         arap_weight=args.arap_weight, use_arap_epoch=args.use_arap_epoch, 
         arap_eig_k=args.arap_eig_k, continue_train=args.continue_train, 
-        checkpoint=args.checkpoint)
+        checkpoint=args.checkpoint, test_checkpoint=args.test_checkpoint)
 
 elif args.mode=='test':
     optimizer_test = torch.optim.Adam(
@@ -259,8 +258,6 @@ elif args.mode=='test':
         device, results_dir_test, meshdata.mean.numpy(), 
         meshdata.std.numpy(), meshdata.template_face, 
         checkpoint=args.checkpoint, test_checkpoint=args.test_checkpoint)
-    #train_eval.test_reconstruct(model, train_loader, lat_vecs, args.test_epochs, optimizer_test, scheduler_test, writer,
-    #    device, results_dir_test, meshdata.mean.numpy(), meshdata.std.numpy(), meshdata.template_face, checkpoint=args.checkpoint)
 
 elif args.mode=='interpolate':
     train_eval.global_interpolate(model, lat_vecs, optimizer_all, scheduler, 
