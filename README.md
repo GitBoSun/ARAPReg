@@ -27,7 +27,9 @@ Code for ICCV 2021 paper: [ARAPReg: An As-Rigid-As Possible Regularization Loss 
 We provide data paths and loaders for 3 datasets: [DFAUST](https://dfaust.is.tue.mpg.de/), [SMAL](https://smal.is.tue.mpg.de/) and Bone dataset. 
 
 ### DFAUST
-[TODO]
+We use 4264 test shapes and 32933 training shapes from DFaust dataset.
+You can download the dataset [here](https://drive.google.com/file/d/1BaACAdJO0uoH5P084Gw11a_j3nKVSUjn/view?usp=sharing).
+Please place `dfaust.zip` in `data/DFaust/raw/`.
 
 ### SMAL
 We use 400 shapes from the family 0 in SMAL dataset. We generate shapes by the SMAL demo where the mean and the variance of the pose vectors are set to 0 and 0.2. We split them to 300 training and 100 testing samples. 
