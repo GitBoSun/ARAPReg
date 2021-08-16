@@ -23,6 +23,7 @@ parser.add_argument('--mode', type=str, default='train', help='[train, test, int
 parser.add_argument('--work_dir', type=str, default='./out')
 parser.add_argument('--data_dir', type=str, default='./data')
 parser.add_argument('--checkpoint', type=str, default=None)
+parser.add_argument('--test_checkpoint', type=str, default=None)
 parser.add_argument('--distributed', action='store_true')
 parser.add_argument('--alsotest', action='store_true')
 
@@ -247,20 +248,24 @@ if args.mode=='train':
         checkpoint=args.checkpoint)
 
 elif args.mode=='test':
-    optimizer_test = torch.optim.Adam(test_lat_vecs.parameters(),
-                                 lr=args.test_lr,
-                                 weight_decay=args.weight_decay)
-    scheduler_test = torch.optim.lr_scheduler.StepLR(optimizer_test,
-                                            args.test_decay_step,
-                                            gamma=args.lr_decay)
-    train_eval.test_reconstruct(model, test_loader, test_lat_vecs, args.test_epochs, optimizer_test, scheduler_test, writer,
-        device, results_dir_test, meshdata.mean.numpy(), meshdata.std.numpy(), meshdata.template_face, checkpoint=args.checkpoint)
+    optimizer_test = torch.optim.Adam(
+        test_lat_vecs.parameters(), lr=args.test_lr, 
+        weight_decay=args.weight_decay)
+    scheduler_test = torch.optim.lr_scheduler.StepLR(
+        optimizer_test, args.test_decay_step, gamma=args.lr_decay)
+
+    train_eval.test_reconstruct(model, test_loader, test_lat_vecs,
+        args.test_epochs, optimizer_test, scheduler_test, writer,
+        device, results_dir_test, meshdata.mean.numpy(), 
+        meshdata.std.numpy(), meshdata.template_face, 
+        checkpoint=args.checkpoint, test_checkpoint=args.test_checkpoint)
     #train_eval.test_reconstruct(model, train_loader, lat_vecs, args.test_epochs, optimizer_test, scheduler_test, writer,
     #    device, results_dir_test, meshdata.mean.numpy(), meshdata.std.numpy(), meshdata.template_face, checkpoint=args.checkpoint)
 
 elif args.mode=='interpolate':
     train_eval.global_interpolate(model, lat_vecs, optimizer_all, scheduler, 
-       writer, device, args.results_dir, meshdata.mean.numpy(), meshdata.std.numpy(), meshdata.template_face, args.inter_num) 
+       writer, device, args.results_dir, meshdata.mean.numpy(), meshdata.std.numpy(), meshdata.template_face, args.inter_num)
+
 elif args.mode=='extraplate':
     optimizer_test = torch.optim.Adam(test_lat_vecs.parameters(),
                                  lr=args.test_lr,

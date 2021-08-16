@@ -13,7 +13,7 @@ def run(model,
         test_loader, test_lat_vecs, optimizer_test, scheduler_test,
         epochs, writer, device, results_dir, data_mean, data_std,
         template_face, arap_weight=0.0, use_arap_epoch=800, arap_eig_k=60, 
-        continue_train=False, checkpoint=None):
+        continue_train=False, checkpoint=None, test_checkpoint=None):
     
     start_epoch = 0
     if continue_train:
@@ -23,7 +23,7 @@ def run(model,
     if (optimizer_test is not None) and continue_train:
         test_epoch = writer.load_checkpoint(
             model, test_lat_vecs, optimizer_test, scheduler_test,
-            checkpoint=checkpoint, test=True)
+            checkpoint=test_checkpoint, test=True)
 
     for epoch in range(start_epoch+1, epochs):
         t = time.time()
@@ -44,7 +44,7 @@ def run(model,
                         model, epoch*3+k, optimizer_test, test_loader, test_lat_vecs,
                         device, results_dir, data_mean, data_std, template_face,
                         arap_weight=0.0, arap_eig_k=arap_eig_k, use_arap=False,
-                        exp_name='update', lr=scheduler_test.get_lr()[0],
+                        exp_name='reconstruct', lr=scheduler_test.get_lr()[0],
                     )
                 test_info = {
                     'test_current_epoch': epoch*3+k,
