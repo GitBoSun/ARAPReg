@@ -9,7 +9,7 @@ import torch.backends.cudnn as cudnn
 import torch_geometric.transforms as T
 from psbody.mesh import Mesh
 
-from models import AE, Pool
+from models import AE, AE_single, Pool
 from datasets import MeshData
 from utils import utils, writer, train_eval, DataLoader, mesh_sampling
 
@@ -158,15 +158,17 @@ up_transform_list = [
     for up_transform in tmp['up_transform']
 ]
 
-model = AE(args.in_channels,
+
+
+
+if args.distributed:
+    model = AE(args.in_channels,
            args.out_channels,
            args.latent_channels,
            edge_index_list,
            down_transform_list,
            up_transform_list,
            K=args.K)
-
-if args.distributed:
     #from mmcv.parallel import MMDistributedDataParallel
     #from mmcv.runner import get_dist_info, init_dist
     #init_dist('pytorch')
@@ -180,6 +182,13 @@ if args.distributed:
     model = torch.nn.DataParallel(model)
     model = model.to(device)
 else:
+    model = AE_single(args.in_channels,
+           args.out_channels,
+           args.latent_channels,
+           edge_index_list,
+           down_transform_list,
+           up_transform_list,
+           K=args.K)
     model = model.to(device)
 #print(model)
 
