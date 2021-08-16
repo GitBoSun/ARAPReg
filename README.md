@@ -73,8 +73,9 @@ Note that for bone dataset, we train and test 4 categories seperately. Currently
 
 ## Model training 
 To retrain our model, run the following scripts after downloading and extracting datasets. 
-Note that on DFaust, it is preferred to have multiple GPUs for better efficiency. The script on DFaust tracks the reconstruction error to avoid over-fitting.
+
 **DFAUST**:
+Note that on DFaust, it is preferred to have multiple GPUs for better efficiency. The script on DFaust tracks the reconstruction error to avoid over-fitting.
 ```
 bash train_and_test_dfaust.sh
 ```
