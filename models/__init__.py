@@ -1,3 +1,3 @@
-from .networks import AE, Pool
+from .networks import AE,AP_single, Pool
 from .arap import ARAP
-__all__ = [Pool, AE, ARAP]
+__all__ = [Pool, AE,AP_single, ARAP]
