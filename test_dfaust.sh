@@ -10,7 +10,6 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 python -W ignore main.py \
 --lr 1e-4 \
 --arap_weight 0.0 \
 --use_arap_epoch 800 \
---arap_eig_k 30 \
 --decay_step 3 \
 --latent_channels 72 \
 --use_vert_pca True \
