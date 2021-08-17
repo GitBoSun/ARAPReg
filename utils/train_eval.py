@@ -12,7 +12,7 @@ def run(model,
         train_loader, lat_vecs, optimizer, scheduler, 
         test_loader, test_lat_vecs, optimizer_test, scheduler_test,
         epochs, writer, device, results_dir, data_mean, data_std,
-        template_face, arap_weight=0.0, use_arap_epoch=800, arap_eig_k=60, 
+        template_face, arap_weight=0.0, use_arap_epoch=800, nz_max=10, 
         continue_train=False, checkpoint=None, test_checkpoint=None):
     
     start_epoch = 0
@@ -33,7 +33,7 @@ def run(model,
             train(
                 model, epoch, optimizer, train_loader, lat_vecs,
                 device, results_dir, data_mean, data_std, template_face,
-                arap_weight=arap_weight, arap_eig_k=arap_eig_k,
+                arap_weight=arap_weight, nz_max=nz_max,
                 use_arap=use_arap, lr=scheduler.get_lr()[0],
             )
 
@@ -43,7 +43,7 @@ def run(model,
                     train(
                         model, epoch*3+k, optimizer_test, test_loader, test_lat_vecs,
                         device, results_dir, data_mean, data_std, template_face,
-                        arap_weight=0.0, arap_eig_k=arap_eig_k, use_arap=False,
+                        arap_weight=0.0, nz_max=nz_max, use_arap=False,
                         exp_name='reconstruct', lr=scheduler_test.get_lr()[0],
                     )
                 test_info = {
@@ -84,7 +84,7 @@ def run(model,
 
 def train(model, epoch, optimizer, loader, lat_vecs, device,
           results_dir,data_mean, data_std, template_face, 
-          arap_weight=0.0, arap_eig_k=30, use_arap=False, dump=False,
+          arap_weight=0.0, nz_max=10, use_arap=False, dump=False,
           exp_name='train', lr=0.0):
     
     model.train()
@@ -133,8 +133,9 @@ def train(model, epoch, optimizer, loader, lat_vecs, device,
             jacob = get_jacobian_rand(
                         pred_shape,  batch_vecs, data_mean_gpu, data_std_gpu,
                         model, device,
-                        epsilon=1e-1)
-            arap_energy = arap(pred_shape, jacob, k=arap_eig_k) / jacob.shape[-1]
+                        epsilon=1e-1,
+                        nz_max=nz_max)
+            arap_energy = arap(pred_shape, jacob,) / jacob.shape[-1]
             total_arap_loss += arap_energy.item()
             loss += arap_weight*arap_energy
 
@@ -205,35 +206,12 @@ def get_jacobian(out, z, data_mean_gpu, data_std_gpu, model, device, epsilon=[1e
     jacobian = jacobian*data_std_gpu
     return jacobian
 
-def get_jacobian_k4(out, z, data_mean_gpu, data_std_gpu, model, device, epsilon=1e-3):
-    nb, nz = z.size()
-    _, n_vert, nc = out.size()
-    jacobian = torch.zeros((nb, n_vert*nc, nz)).to(device)
-    k = 4
-    for i in range(nz//k):
-        batched_z_new = []
-        for j in range(k):
-            dz = torch.zeros(z.size()).to(device)
-            dz[:, i*k+j] = epsilon
-            z_new = z + dz
-            batched_z_new.append(z_new)
-        batched_z_new = torch.stack(batched_z_new)
-        out_new = model(batched_z_new)
-
-        dout = (out_new.reshape(k, nb, n_vert, nc) - out.unsqueeze(0)).view(k, nb*n_vert*nc).transpose(0, 1).reshape(nb,n_vert*nc,k)
-
-        jacobian[:, :, i*k:(i+1)*k] = dout/epsilon
-
-    data_std_gpu = data_std_gpu.reshape((1, n_vert*nc, 1))
-    jacobian = jacobian*data_std_gpu
-    return jacobian
-
-def get_jacobian_rand(cur_shape, z, data_mean_gpu, data_std_gpu, model, device, epsilon=[1e-3]):
+def get_jacobian_rand(cur_shape, z, data_mean_gpu, data_std_gpu, model, device, epsilon=[1e-3],nz_max=10):
     nb, nz = z.size()
     _, n_vert, nc = cur_shape.size()
-    if nz >= 10:
-      rand_idx = np.random.permutation(nz)[:10]
-      nz = 10
+    if nz >= nz_max:
+      rand_idx = np.random.permutation(nz)[:nz_max]
+      nz = nz_max
     else:
       rand_idx = np.arange(nz)
     
