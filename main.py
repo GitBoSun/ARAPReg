@@ -55,7 +55,7 @@ parser.add_argument('--test_decay_step', type=int, default=1)
 
 parser.add_argument('--arap_weight', type=float, default=0.05)
 parser.add_argument('--use_arap_epoch', type=int, default=600, help='epoch that we start to use arap loss')
-parser.add_argument('--arap_eig_k', type=int, default=60, help='only care about last k eigvals of the hessian matrix in ARAP')
+parser.add_argument('--nz_max', type=int, default=60, help='random sample nz_max latent channels to compute ARAP energy')
 
 # training hyperparameters
 parser.add_argument('--batch_size', type=int, default=16)
@@ -252,7 +252,7 @@ if args.mode=='train':
         args.epochs, writer, device, results_dir_train, 
         meshdata.mean.numpy(), meshdata.std.numpy(), meshdata.template_face,
         arap_weight=args.arap_weight, use_arap_epoch=args.use_arap_epoch, 
-        arap_eig_k=args.arap_eig_k, continue_train=args.continue_train, 
+        nz_max=args.nz_max, continue_train=args.continue_train, 
         checkpoint=args.checkpoint, test_checkpoint=args.test_checkpoint)
 
 elif args.mode=='test':
