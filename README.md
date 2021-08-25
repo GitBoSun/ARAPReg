@@ -1,5 +1,5 @@
 # ARAPReg
-Code for ICCV 2021 paper: [ARAPReg: An As-Rigid-As Possible Regularization Loss for Learning Deformable Shape Generators.](https://drive.google.com/file/d/1KSIYgcT_L4_EDn70TBbi5qllq5VvAzpm/view?usp=sharing).
+Code for ICCV 2021 paper: [ARAPReg: An As-Rigid-As Possible Regularization Loss for Learning Deformable Shape Generators.](https://arxiv.org/pdf/2108.09432.pdf).
 <p align="center"> 
 <img src="Teaser.png">
 </p>
