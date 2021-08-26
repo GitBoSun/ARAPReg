@@ -39,7 +39,7 @@ After downloading, please move `bone.zip` to `./data` then extract it.
 ### Pretrained checkpoints
 You can find pre-trained models and training logs in the following paths:
 
-**DFAUST**: [checkpoints.zip](https://drive.google.com/file/d/1KvKe1ZqvpfC4FtAG1OQvSsO28jNS1LkJ/view?usp=sharing). Uncompress it under repository root will place two checkpoints in `DFaust/out/arap/checkpoints/` and `DFaust/out/arap/test_checkpoints/`.
+**DFAUST**: [checkpoints.zip](https://drive.google.com/file/d/1mCiF-XkMWPNDih4mmxRn6aaPnTAHdpK0/view?usp=sharing). Uncompress it under repository root will place two checkpoints in `DFaust/out/arap/checkpoints/` and `DFaust/out/arap/test_checkpoints/`.
 
 **SMAL**: [smal_ckpt.zip](https://drive.google.com/file/d/1IIAW5SmylMHsFpU-croeu-uNPdKP_fnL/view?usp=sharing).  Move it to `./work_dir/SMAL/out`, then extract it. 
 
