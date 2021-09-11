@@ -43,7 +43,7 @@ You can find pre-trained models and training logs in the following paths:
 
 **SMAL**: [smal_ckpt.zip](https://drive.google.com/file/d/1IIAW5SmylMHsFpU-croeu-uNPdKP_fnL/view?usp=sharing).  Move it to `./work_dir/SMAL/out`, then extract it. 
 
-**Bone**: [bone_ckpt.zip](https://drive.google.com/file/d/1pKiLV2V0DD6_izzYA6r1yNPSouA2OVW8/view?usp=sharing). Move it to `./work_dir`, then extract it. It contains checkpoints for 4 bone categories. 
+**Bone**: [bone_ckpt.zip](https://drive.google.com/file/d/15I-uABi6_-2qM3QG40Df9G9oNh-K55Nl/view?usp=sharing). Move it to `./work_dir`, then extract it. It contains checkpoints for 4 bone categories. 
 
 ### Run testing 
 After putting pre-trained checkpoints to their corresponding paths, you can run the following scripts to optimize latent vectors for shape reconstruction. Note that our model has the auto-decoder architecture, so there's still a latent vector training stage for testing shapes. 
