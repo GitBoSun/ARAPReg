@@ -9,6 +9,6 @@ CUDA_VISIBLE_DEVICES=0 python main.py \
 --decay_step 10 \
 --latent_channels 8 \
 --use_vert_pca True \
---work_dir ./work_dir/bone/femur \
+--work_dir ./work_dir/bone/tibia \
 --dataset Bone \
---data_dir ./data/bone/femur \
+--data_dir ./data/bone/tibia \
