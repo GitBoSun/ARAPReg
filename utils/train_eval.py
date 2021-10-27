@@ -283,7 +283,7 @@ def global_interpolate(
     if not os.path.exists(results_dir):
         os.makedirs(results_dir)
 
-    min_path = np.random.randint(0,  min_tree.shape[0], size=50)
+    min_path = np.random.randint(0,  lat_vecs_np.shape[0], size=50)
     print('min_path', min_path)
 
     for p in range(len(min_path)-1):
