@@ -58,6 +58,7 @@ bash test_dfaust.sh
 ```
 bash test_smal.sh
 ```
+Note: batch_size is set to 16 in the script. It will have CUDA_OUT_OF_MEMORY error when the ARAPReg loss is added at the 800th epoch. You will have to set the batch size to 8 after 800 epochs. 
 **Bone**:
 ```
 bash test_smal.sh
