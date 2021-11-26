@@ -13,7 +13,7 @@ def run(model,
         test_loader, test_lat_vecs, optimizer_test, scheduler_test,
         epochs, writer, device, results_dir, data_mean, data_std,
         template_face, arap_weight=0.0, use_arap_epoch=800, nz_max=10, 
-        continue_train=False, checkpoint=None, test_checkpoint=None):
+        continue_train=False, checkpoint=None, test_checkpoint=None, dataset='DFaust'):
     
     start_epoch = 0
     if continue_train:
@@ -35,6 +35,7 @@ def run(model,
                 device, results_dir, data_mean, data_std, template_face,
                 arap_weight=arap_weight, nz_max=nz_max,
                 use_arap=use_arap, lr=scheduler.get_lr()[0],
+                dataset=dataset,
             )
 
         if optimizer_test is not None:
@@ -45,6 +46,7 @@ def run(model,
                         device, results_dir, data_mean, data_std, template_face,
                         arap_weight=0.0, nz_max=nz_max, use_arap=False,
                         exp_name='reconstruct', lr=scheduler_test.get_lr()[0],
+                        dataset=dataset,
                     )
                 test_info = {
                     'test_current_epoch': epoch*3+k,
@@ -78,14 +80,14 @@ def run(model,
         }
 
         writer.print_info(info)
-        if epoch % 10 == 0:
+        if epoch % 799 == 0:
             writer.save_checkpoint(model, lat_vecs, optimizer, scheduler, epoch)
 
 
 def train(model, epoch, optimizer, loader, lat_vecs, device,
           results_dir,data_mean, data_std, template_face, 
           arap_weight=0.0, nz_max=10, use_arap=False, dump=False,
-          exp_name='train', lr=0.0):
+          exp_name='train', lr=0.0, dataset='DFaust'):
     
     model.train()
     total_loss = 0
@@ -115,11 +117,12 @@ def train(model, epoch, optimizer, loader, lat_vecs, device,
                 
         pred_shape = out * data_std_gpu + data_mean_gpu
         gt_shape = x * data_std_gpu + data_mean_gpu
-        
-        # l1_loss = F.l1_loss(pred_shape, gt_shape, reduction='mean') 
-        #l1_loss = F.l1_loss(x, out, reduction='mean')
-        l1_loss = F.l1_loss(pred_shape, gt_shape, reduction='mean')
-
+        if dataset=='SMAL':
+            l1_loss = F.l1_loss(x, out, reduction='mean')
+            arap_ep = 1e-3
+        else:
+            l1_loss = F.l1_loss(pred_shape, gt_shape, reduction='mean')
+            arap_ep = 1e-1
         tmp_error = torch.sqrt(torch.sum((pred_shape - gt_shape)**2,dim=2)).detach().cpu()
         mse[1] += tmp_error.view(-1).shape[0]
         mse[0] += tmp_error.sum().item()
@@ -133,7 +136,7 @@ def train(model, epoch, optimizer, loader, lat_vecs, device,
             jacob = get_jacobian_rand(
                         pred_shape,  batch_vecs, data_mean_gpu, data_std_gpu,
                         model, device,
-                        epsilon=1e-1,
+                        epsilon=arap_ep,
                         nz_max=nz_max)
             arap_energy = arap(pred_shape, jacob,) / jacob.shape[-1]
             total_arap_loss += arap_energy.item()
@@ -230,7 +233,7 @@ def get_jacobian_rand(cur_shape, z, data_mean_gpu, data_std_gpu, model, device, 
 def test_reconstruct(
     model, test_loader, test_lat_vecs, epochs, test_optimizer, scheduler,
     writer, device, results_dir, data_mean, data_std, template_face,
-    checkpoint=None, test_checkpoint=None):
+    checkpoint=None, test_checkpoint=None, dataset='DFaust'):
     # load model
     start_epoch = writer.load_checkpoint(model, checkpoint=checkpoint)
     if test_checkpoint is not None:
@@ -246,6 +249,7 @@ def test_reconstruct(
                 test_lat_vecs, device, results_dir, data_mean,
                 data_std, template_face, arap_weight=0.0, use_arap=False,
                 dump=True, exp_name='reconstruct', lr=scheduler.get_lr()[0],
+                dataset=dataset,
             )
         
         t_duration = time.time() - t

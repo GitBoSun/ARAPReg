@@ -192,14 +192,19 @@ else:
     model = model.to(device)
 #print(model)
 
+rand_std = 1.0
+if args.dataset=='SMAL' and args.use_pose_init:
+    rand_std = 0.2 
 test_num_scenes = len(meshdata.test_dataset)
 test_lat_vecs = torch.nn.Embedding(test_num_scenes, args.latent_channels,)
-torch.nn.init.normal_(test_lat_vecs.weight.data, 0.0, 0.2)
+torch.nn.init.normal_(test_lat_vecs.weight.data, 0.0, rand_std)
 test_lat_vecs = test_lat_vecs.to(device)
 
 if args.use_vert_pca:
     pca_init = torch.from_numpy(meshdata.train_pca_sv)
     lat_vecs = torch.nn.Embedding.from_pretrained(pca_init, freeze=False)
+    print(meshdata.train_pca_sv.mean(), np.std(meshdata.train_pca_sv))
+
     test_pca_init = torch.from_numpy(meshdata.test_pca_sv)
     test_lat_vecs = torch.nn.Embedding.from_pretrained(test_pca_init, freeze=False)
     test_lat_vecs = test_lat_vecs.to(device)
@@ -210,13 +215,17 @@ elif args.use_pose_init:
 else:
     train_num_scenes = len(meshdata.train_dataset)
     lat_vecs = torch.nn.Embedding(train_num_scenes, args.latent_channels,)
-    torch.nn.init.normal_(lat_vecs.weight.data,0.0,0.2)
+    torch.nn.init.normal_(lat_vecs.weight.data,0.0,rand_std)
 
 lat_vecs = lat_vecs.to(device)
 if args.continue_train:
     start_epoch = writer.load_checkpoint(model, lat_vecs, None,
                                          None, checkpoint=args.checkpoint)
 
+if args.dataset=='SMAL':
+    train_vec_lr = 8e-3
+else:
+    train_vec_lr = args.lr
 optimizer_all = torch.optim.Adam(
     [
         {
@@ -226,7 +235,7 @@ optimizer_all = torch.optim.Adam(
         },
         {
             "params": lat_vecs.parameters(),
-            "lr": args.lr,
+            "lr": train_vec_lr,
             "weight_decay": args.weight_decay
         },
     ]
@@ -253,7 +262,7 @@ if args.mode=='train':
         meshdata.mean.numpy(), meshdata.std.numpy(), meshdata.template_face,
         arap_weight=args.arap_weight, use_arap_epoch=args.use_arap_epoch, 
         nz_max=args.nz_max, continue_train=args.continue_train, 
-        checkpoint=args.checkpoint, test_checkpoint=args.test_checkpoint)
+        checkpoint=args.checkpoint, test_checkpoint=args.test_checkpoint, dataset=args.dataset)
 
 elif args.mode=='test':
     optimizer_test = torch.optim.Adam(
@@ -266,7 +275,7 @@ elif args.mode=='test':
         args.test_epochs, optimizer_test, scheduler_test, writer,
         device, results_dir_test, meshdata.mean.numpy(), 
         meshdata.std.numpy(), meshdata.template_face, 
-        checkpoint=args.checkpoint, test_checkpoint=args.test_checkpoint)
+        checkpoint=args.checkpoint, test_checkpoint=args.test_checkpoint, dataset=args.dataset)
 
 elif args.mode=='interpolate':
     train_eval.global_interpolate(model, lat_vecs, optimizer_all, scheduler, 

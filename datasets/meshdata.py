@@ -77,6 +77,8 @@ class MeshData(object):
                                                    3).mean(dim=0)
         self.std = self.train_dataset.data.x.view(self.num_train_graph, -1,
                                                   3).std(dim=0)
+        if self.dataset=='SMAL':
+            self.std = torch.ones(self.std.size())*0.2
         self.normalize()
 
     def normalize(self):
