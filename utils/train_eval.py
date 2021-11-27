@@ -80,7 +80,7 @@ def run(model,
         }
 
         writer.print_info(info)
-        if epoch % 799 == 0:
+        if epoch % 10 == 0:
             writer.save_checkpoint(model, lat_vecs, optimizer, scheduler, epoch)
 
 
